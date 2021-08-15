@@ -13,7 +13,6 @@ const REMOTE_DATABASE = "/things.db";
   const db = new SQL.Database(new Uint8Array(buf));
   const resultsSection = document.querySelector("#results");
   const tagsSection = document.querySelector("#tags");
-  const resultLabel = document.querySelector("h2");
 
   document.querySelector("input").addEventListener("keyup", (e) => {
     const term = e.target.value;
@@ -97,7 +96,7 @@ const REMOTE_DATABASE = "/things.db";
       `;
     } else {
       resultsSection.innerHTML = "";
-      resultLabel.innerHTML = "";
+      tagsSection.innerHTML = "";
     }
   });
 })();
