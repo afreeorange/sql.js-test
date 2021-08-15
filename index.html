@@ -1,69 +1,71 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-US" class="no-js">
   <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Search Test</title>
-    <style>
-      html,
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, avenir next, avenir,
-          segoe ui, helvetica neue, helvetica, Ubuntu, roboto, noto, arial,
-          sans-serif;
-        word-wrap: break-word;
-      }
-      input {
-        box-sizing: border-box;
-        font-size: 2em;
-        padding: 0.25em;
-        width: 100%;
-      }
-      div {
-        display: grid;
-        grid-template-columns: 75% auto;
-      }
-      section#tags {
-        order: 2;
-      }
-      section#results {
-        order: 1;
-      }
-      mark {
-        background: orange;
-        color: black;
-      }
-
-      @media screen and (max-width: 700px) {
-        div {
-          display: block;
-        }
-      }
-    </style>
+    <meta name="description" content="Archive" />
+    <meta property="og:title" content="Archive" />
+    <meta
+      property="og:image"
+      content="https://static-log.nikhil.io/_previews/7e40473d2773541286f35eb1e47ad528.png"
+    />
+    <meta
+      property="og:description"
+      content="Search won’t work since Javascript’s disabled 🙁"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://log.nikhil.io/archive/" />
+    <meta property="og:site_name" content="Nikhil's Log" />
+    <meta
+      name="google-site-verification"
+      content="zZ8S_r0B6ZCxgP_yPsKkCxHhirltYL_hS-liqhjjlg8"
+    />
+    <title>Archive &ndash; log.nikhil.io</title>
+    <script type="module">
+      document.documentElement.classList.remove("no-js");
+      document.documentElement.classList.add("js");
+    </script>
+    <link
+      rel="apple-touch-icon"
+      href="https://log.nikhil.io/assets/img/favicon.svg"
+    />
+    <link
+      rel="shortcut icon"
+      href="https://log.nikhil.io/assets/img/favicon.svg"
+    />
+    <link rel="stylesheet" href="https://log.nikhil.io/assets/css/site.css" />
   </head>
+
   <body>
-    <h1>SQL.js Test</h1>
-    <input placeholder="3 or more characters" autofocus />
-    <small>
-      Searches
-      <a href="https://log.nikhil.io">my log</a>
-      and is meant to be a replacement for the current Algolia-powered search
-      soon. You can use
-      <code>*</code>
-      ,
-      <code>AND</code>
-      , and
-      <code>OR</code>
-      (e.g. "shit* OR art")
-    </small>
-    <h2></h2>
-    <div>
-      <section id="tags"></section>
-      <section id="results"></section>
+    <input type="checkbox" id="dark-mode" />
+    <div class="container archive">
+      <header>
+        <nav>
+          <h1>
+            <a href="/" title="Home">log.nikhil.io</a>
+          </h1>
+          <ul>
+            <li>
+              <label for="dark-mode">
+                <span></span>
+                <span>Dark Mode</span>
+              </label>
+            </li>
+          </ul>
+        </nav>
+      </header>
+      <main>
+        <div>
+          <section id="search">
+            <input placeholder="3 or more characters" autofocus />
+          </section>
+          <section id="tags" style="display: none"></section>
+          <section id="search-results" style="display: none"></section>
+        </div>
+      </main>
     </div>
 
     <script src="/sql-wasm.js"></script>
     <script src="/search.js"></script>
-    <script src="/mark.min.js"></script>
   </body>
 </html>

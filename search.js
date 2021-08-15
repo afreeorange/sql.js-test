@@ -11,10 +11,10 @@ const REMOTE_DATABASE = "/things.db";
   const dataPromise = fetch(REMOTE_DATABASE).then((res) => res.arrayBuffer());
   const [SQL, buf] = await Promise.all([sqlPromise, dataPromise]);
   const db = new SQL.Database(new Uint8Array(buf));
-  const resultsSection = document.querySelector("#results");
+  const resultsSection = document.querySelector("#search-results");
   const tagsSection = document.querySelector("#tags");
 
-  document.querySelector("input").addEventListener("keyup", (e) => {
+  document.querySelector("main input").addEventListener("keyup", (e) => {
     const term = e.target.value;
 
     if (term && term.length >= 3) {
@@ -27,14 +27,17 @@ const REMOTE_DATABASE = "/things.db";
             t.category,
             t.url,
             group_concat(m.tag_name) as tags
-        FROM tag_map m
+        FROM
+          tag_map m
         INNER JOIN (
-            SELECT *
-            FROM things_fts t
-            WHERE things_fts MATCH 'title:${term} OR content:${term}'
-            ORDER BY modified DESC, RANK
-        ) t ON m.thing_id = t.id
-        GROUP BY t.id
+              SELECT *
+              FROM things_fts t
+              WHERE things_fts MATCH 'title:${term}* OR content:${term}*'
+              ORDER BY modified DESC, RANK
+          )
+          t ON m.thing_id = t.id
+        GROUP BY
+          t.id
         `);
 
       const tagSearchStatement = db.prepare(`
@@ -52,69 +55,83 @@ const REMOTE_DATABASE = "/things.db";
             t.name
         `);
 
-      let rows = [];
-      let tagRows = [];
-
       let res = "";
-      let tagRes = "";
-
-      while (tagSearchStatement.step()) {
-        tagRows.push(tagSearchStatement.getAsObject());
-      }
-
+      let rows = [];
       while (thingSearchStatement.step()) {
         const row = thingSearchStatement.getAsObject();
         rows.push(row);
       }
-
       const count = rows.length;
+
+      let tagRes = "";
+      let tagRows = [];
+      while (tagSearchStatement.step()) {
+        tagRows.push(tagSearchStatement.getAsObject());
+      }
+      const tagCount = tagRows.length;
+
       rows.map(
         (row) =>
           (res += `
-              <h3><a href="https://log.nikhil.io${row.url}">${
-            row.title
-          }</a></h3>
-              <p>${row.excerpt}</p>
-              <small><strong>${row.category}</strong> &ndash; ${new Date(
-            parseInt(row.modified)
-          )} &ndash; ${row.tags
-            .split(",")
-            .map(
-              (t) =>
-                '<a href="https://log.nikhil.io/tags/' + t + '">' + t + "</a>"
-            )
-            .join(", ")} </small>
-          `)
+          <article>
+            <header>
+              <h2>
+                <a href="https://log.nikhil.io${row.url}">${row.title}</a>
+              </h2>
+            </header>
+            <p>${row.excerpt}</p>
+            <footer>
+              <ul class="tags">
+                ${row.tags
+                  .split(",")
+                  .map(
+                    (t) => `
+                    <li>
+                      <a class="search-result-tag" title="Posts tagged ${t}" href="https://log.nikhil.io/tags/${t}">${t}</a>
+                    </li>
+                  `
+                  )
+                  .join("")}
+              </ul>
+              <time>
+                ${new Date(parseInt(row.modified))}
+              </time>
+            </footer>
+          </article>
+        `)
       );
 
-      console.log("tagRows :>> ", tagRows);
-
       tagRows.map((t) => {
-        tagRes +=
-          '<a href="https://log.nikhil.io/tags/' +
-          t.name +
-          '">' +
-          t.name +
-          " (" +
-          t.count +
-          ")</a> ";
+        tagRes += `<li>
+            <a href="https://log.nikhil.io/tags/${t.name}">${t.name} <span>${t.count}</span></a>
+          </li> `;
       });
 
       thingSearchStatement.free();
+
+      resultsSection.style.display = "block";
+      tagsSection.style.display = "block";
       resultsSection.innerHTML = res;
       resultsSection.innerHTML = `
-      <h2>Found ${count === 0 ? "no" : count} result${
-        count > 1 || count === 0 ? "s" : ""
-      }</h2>
-      ${res}
+      ${
+        count === 0
+          ? `<div id="search-no-results">No results for "${term}"</div>`
+          : res
+      }
     `;
-      tagsSection.innerHTML = `
-        <h2>Tags</h2>
-        ${tagRes}
-      `;
+
+      if (tagCount === 0) {
+        tagsSection.style.display = "none";
+      } else {
+        tagsSection.innerHTML = `
+          <ul class="list-of-things-with-count">
+            ${tagRes}
+          </ul>
+        `;
+      }
     } else {
-      resultsSection.innerHTML = "";
-      tagsSection.innerHTML = "";
+      resultsSection.style.display = "none";
+      tagsSection.style.display = "none";
     }
   });
 })();
