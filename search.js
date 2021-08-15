@@ -38,18 +38,28 @@ const REMOTE_DATABASE = "/things.db";
         `);
 
       const tagSearchStatement = db.prepare(`
-        SELECT name AS tag
-        FROM tags
-        WHERE name LIKE '%${term}%'
+        SELECT 
+            t.name as name,
+            count(n.tag_name) as count
+        FROM
+            tags t
+        INNER JOIN
+            tag_map n
+            ON n.tag_name = t.name
+        WHERE
+            t.name LIKE '%${term}%'
+        GROUP BY
+            t.name
         `);
 
       let rows = [];
       let tagRows = [];
+
       let res = "";
       let tagRes = "";
 
       while (tagSearchStatement.step()) {
-        tagRows.push(tagSearchStatement.get()[0]);
+        tagRows.push(tagSearchStatement.getAsObject());
       }
 
       while (thingSearchStatement.step()) {
@@ -77,9 +87,17 @@ const REMOTE_DATABASE = "/things.db";
           `)
       );
 
+      console.log("tagRows :>> ", tagRows);
+
       tagRows.map((t) => {
         tagRes +=
-          '<a href="https://log.nikhil.io/tags/' + t + '">' + t + "</a> ";
+          '<a href="https://log.nikhil.io/tags/' +
+          t.name +
+          '">' +
+          t.name +
+          " (" +
+          t.count +
+          ")</a> ";
       });
 
       thingSearchStatement.free();
