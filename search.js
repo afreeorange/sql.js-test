@@ -1,4 +1,4 @@
-const REMOTE_DATABASE = "https://log.nikhil.io/things.db";
+const REMOTE_DATABASE = "/things.db";
 
 (async () => {
   config = {
@@ -11,28 +11,50 @@ const REMOTE_DATABASE = "https://log.nikhil.io/things.db";
   const dataPromise = fetch(REMOTE_DATABASE).then((res) => res.arrayBuffer());
   const [SQL, buf] = await Promise.all([sqlPromise, dataPromise]);
   const db = new SQL.Database(new Uint8Array(buf));
-  const results = document.querySelector("div");
+  const resultsSection = document.querySelector("#results");
+  const tagsSection = document.querySelector("#tags");
   const resultLabel = document.querySelector("h2");
 
   document.querySelector("input").addEventListener("keyup", (e) => {
     const term = e.target.value;
 
     if (term && term.length >= 3) {
-      const searchStatement = db.prepare(`
+      const thingSearchStatement = db.prepare(`
+        SELECT 
+            t.id,
+            t.title,
+            t.excerpt,
+            t.modified,
+            t.category,
+            t.url,
+            group_concat(m.tag_name) as tags
+        FROM tag_map m
+        INNER JOIN (
             SELECT *
-            FROM things
-            WHERE title LIKE '%${term}%' OR search_content LIKE '%${term}%
-            LIMIT 2
-            ORDER BY modified DESC'
+            FROM things_fts t
+            WHERE things_fts MATCH 'title:${term} OR content:${term}'
+            ORDER BY modified DESC, RANK
+        ) t ON m.thing_id = t.id
+        GROUP BY t.id
         `);
 
-      searchStatement.bind({ ":term": term });
+      const tagSearchStatement = db.prepare(`
+        SELECT name AS tag
+        FROM tags
+        WHERE name LIKE '%${term}%'
+        `);
 
       let rows = [];
+      let tagRows = [];
       let res = "";
+      let tagRes = "";
 
-      while (searchStatement.step()) {
-        const row = searchStatement.getAsObject();
+      while (tagSearchStatement.step()) {
+        tagRows.push(tagSearchStatement.get()[0]);
+      }
+
+      while (thingSearchStatement.step()) {
+        const row = thingSearchStatement.getAsObject();
         rows.push(row);
       }
 
@@ -40,21 +62,41 @@ const REMOTE_DATABASE = "https://log.nikhil.io/things.db";
       rows.map(
         (row) =>
           (res += `
-            <h3><a href="https://log.nikhil.io${row.url}">${row.title.replace(
-            term,
-            "<mark>" + term + "</mark>"
-          )}</a></h3>
-            <p>${row.excerpt.replace(term, "<mark>" + term + "</mark>")}</p>
-        `)
+              <h3><a href="https://log.nikhil.io${row.url}">${
+            row.title
+          }</a></h3>
+              <p>${row.excerpt}</p>
+              <small><strong>${row.category}</strong> &ndash; ${new Date(
+            parseInt(row.modified)
+          )} &ndash; ${row.tags
+            .split(",")
+            .map(
+              (t) =>
+                '<a href="https://log.nikhil.io/tags/' + t + '">' + t + "</a>"
+            )
+            .join(", ")} </small>
+          `)
       );
 
-      searchStatement.free();
-      results.innerHTML = res;
-      resultLabel.innerHTML = `Found ${count === 0 ? "no" : count} result${
+      tagRows.map((t) => {
+        tagRes +=
+          '<a href="https://log.nikhil.io/tags/' + t + '">' + t + "</a> ";
+      });
+
+      thingSearchStatement.free();
+      resultsSection.innerHTML = res;
+      resultsSection.innerHTML = `
+      <h2>Found ${count === 0 ? "no" : count} result${
         count > 1 || count === 0 ? "s" : ""
-      }`;
+      }</h2>
+      ${res}
+    `;
+      tagsSection.innerHTML = `
+        <h2>Tags</h2>
+        ${tagRes}
+      `;
     } else {
-      results.innerHTML = "";
+      resultsSection.innerHTML = "";
       resultLabel.innerHTML = "";
     }
   });

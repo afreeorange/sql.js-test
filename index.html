@@ -19,13 +19,43 @@
         padding: 0.25em;
         width: 100%;
       }
+      div {
+        display: grid;
+        grid-template-columns: 75% auto;
+      }
+      section#tags {
+        order: 2;
+      }
+      section#results {
+        order: 1;
+      }
+
+      @media screen and (max-width: 700px) {
+        div {
+          display: block;
+        }
+      }
     </style>
   </head>
   <body>
     <h1>SQL.js Test</h1>
     <input placeholder="3 or more characters" autofocus />
+    <small>
+      Searches
+      <a href="https://log.nikhil.io">my log</a>
+      and is meant to be a replacement soon. You can use
+      <code>*</code>
+      ,
+      <code>AND</code>
+      , and
+      <code>OR</code>
+      (e.g. "shit* OR art")
+    </small>
     <h2></h2>
-    <div></div>
+    <div>
+      <section id="tags"></section>
+      <section id="results"></section>
+    </div>
 
     <script src="/sql-wasm.js"></script>
     <script src="/search.js"></script>
