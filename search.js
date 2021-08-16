@@ -14,7 +14,7 @@ const REMOTE_DATABASE = "/things.db";
   const resultsSection = document.querySelector("#search-results");
   const tagsSection = document.querySelector("#tags");
 
-  document.querySelector("main input").addEventListener("keyup", (e) => {
+  document.querySelector("#search input").addEventListener("keyup", (e) => {
     const term = e.target.value;
 
     if (term && term.length >= 3) {
@@ -33,7 +33,7 @@ const REMOTE_DATABASE = "/things.db";
               SELECT *
               FROM things_fts t
               WHERE things_fts MATCH 'title:${term}* OR content:${term}*'
-              ORDER BY modified DESC, RANK
+              ORDER BY RANK
           )
           t ON m.thing_id = t.id
         GROUP BY
@@ -79,7 +79,7 @@ const REMOTE_DATABASE = "/things.db";
                 <a href="https://log.nikhil.io${row.url}">${row.title}</a>
               </h2>
             </header>
-            <p>${row.excerpt}</p>
+            ${row.excerpt !== null ? `<p>${row.excerpt}</p>` : ""}
             <footer>
               <ul class="tags">
                 ${row.tags
@@ -94,7 +94,7 @@ const REMOTE_DATABASE = "/things.db";
                   .join("")}
               </ul>
               <time>
-                ${new Date(parseInt(row.modified))}
+                ${new Date(parseInt(row.modified)).toDateString()}
               </time>
             </footer>
           </article>
@@ -115,7 +115,7 @@ const REMOTE_DATABASE = "/things.db";
       resultsSection.innerHTML = `
       ${
         count === 0
-          ? `<div id="search-no-results">No results for "${term}"</div>`
+          ? `<div id="search-no-results">No posts with "${term}"</div>`
           : res
       }
     `;
